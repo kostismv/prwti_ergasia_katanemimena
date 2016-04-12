@@ -1,76 +1,147 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <omp.h>
 #include <time.h>
+#include <string.h>
+#include <time.h>
+
+#define UPLIMIT 30
+#define DOWNLIMIT 12
+
 int main(int argc, char *argv[])
 {
-	FILE *fp;
-	struct timespec start, end;
-	char *line= NULL;
-	char *line2=NULL;
-	size_t len,len2=0;
-	ssize_t read,read2;
-	fp = fopen("output4","r");
-    int n,n2=0;
-    while((read = getline(&line2, &len2, fp)) != -1)
-    {
-      n2++;
-    }
-	if(fp==NULL){
-		exit(EXIT_FAILURE);
-	}
-
+    
+    
+    FILE *fp;
+    long size;
     const char temp[2] = " ";
+    double temp2;
+    long long count=0;
+    size_t result;
+    char *buffer;
+    struct timespec start, end,middle1,middle2;
+    const char *filename;
+    filename = argv[1];
+    fp = fopen(filename,"r");
     
-    int j;
-    int count=0;
+    fseek(fp,0,SEEK_END);
+    size = ftell(fp);
+    rewind(fp);
+    buffer = (char*) malloc (sizeof(char)*size);
+    result = fread(buffer,1,size,fp);
+    long long i;
+    long long j=0;
+    long long count2=0;
+    int threads = atoi(argv[2]);
+    printf("%d\n",threads);
+    omp_set_num_threads(threads);
+    int b;
     char *token;
-    float temp2;
-    fp = fopen("output4","r");
-    
-    omp_set_num_threads(2);
-    FILE *out = fopen("test","w");
-    
-    
-    
+    char **buffer2;
+    int *mikos;
     clock_gettime(CLOCK_MONOTONIC,  &start);
     
-for(j=0;j<n2;j++){	
-    read = getline(&line, &len, fp);
-    token = strtok(line,temp);
-    int c=0,b=0;
-		
-    while(token != NULL){
-    	temp2 = atof(token);
-    	if(temp2<30 && temp2>12)
-    	{
-		b++;
-    	}
-    	token = strtok(NULL,temp);
-         
-    }
+      
+      for(i=0;i<result;i++)
+      {
+    
+         if(buffer[i]=='\n')
+         {
+          count2++;
+         }          
+      }
+    
+    
+     buffer2 = malloc (sizeof(char*)*count2);
+    
+   
+    
+    
+    
+       
+    for(i=0;i<count2;i++)
+    {
 
-    if(b==3){
-	count++;
-    }
-
+        buffer2[i] = malloc (sizeof(char)*31);
     }
     
+    
+    
+    
+    
+     int row=0;
+     j=0;
+     for(i=0;i<result;i++)
+     {
+      if(buffer[i]=='\n')
+      { 
+        row++;
+        j=0;
+      }
+      else
+      {
+        buffer2[row][j]=buffer[i];
+        j++;
+      }
+
+    }
+
+    
+    
+    
+    
+    
+    
+  
+  
+  
+   
+    
+    for(i=0;i<count2;i++)
+    {
+        b=0;
+        
+            
+        token=strsep(&buffer2[i],temp);
+        while(token!=NULL)
+        {
+           sscanf(token,"%lf",&temp2);
+           
+           if(temp2>DOWNLIMIT && temp2<UPLIMIT)
+           {
+
+              b++;
+           }
+           token=strsep(&buffer2[i],temp);
+        }
+        if(b==3)
+        {
+            count++;
+        }
+    }
+    #pragma omp master
     clock_gettime (CLOCK_MONOTONIC, &end);
 }
-
+      
     
+ 
+
+
+
+
     const int DAS_NANO_SECONDS_IN_SEC = 1000000000;
     long timeElapsed_s = end.tv_sec -start.tv_sec;
     long timeElapsed_n = end.tv_nsec-start.tv_nsec;
     if ( timeElapsed_n < 0 ) {timeElapsed_n = DAS_NANO_SECONDS_IN_SEC + timeElapsed_n; 
-    	timeElapsed_s--;}
-printf("Time: %ld.%09ld secs \n",timeElapsed_s,timeElapsed_n);
-printf("%d",count);
-    
-    
+        timeElapsed_s--;}
+       printf("Time: %ld.%09ld secs \n",timeElapsed_s,timeElapsed_n);
+       printf("%lld",count);
 
+
+
+
+    
+    
     return 0;
+    }
 
-}
